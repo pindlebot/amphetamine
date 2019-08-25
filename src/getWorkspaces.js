@@ -9,7 +9,7 @@ module.exports = async function getWorkspaces () {
   const packageJson = require(rootPackageJsonPath)
   const files = await Promise.all(
     packageJson.workspaces.map(
-      pattern => glob(pattern)
+      pattern => glob(pattern, { cwd, ignore: ['!**/node_modules/**'] })
     )
   )
 

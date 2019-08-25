@@ -26,7 +26,7 @@ const _ = yargs
         .demandOption('command', 'Please provide the command to run in each workspace')
     }, async (argv) => {
       const workspaces = await getWorkspaces()
-
+      console.time('amphetamine')
       while (workspaces.length) {
         const [name, workspace] = workspaces.shift()
         const { location, pkg } = workspace
@@ -47,5 +47,6 @@ const _ = yargs
           console.error(err)
         }
       }
+      console.timeEnd('amphetamine')
     })
   .argv
