@@ -3,7 +3,7 @@
 const path = require('path')
 const glob = require('fast-glob')
 
-async function getWorkspaces () {
+module.exports = async function getWorkspaces () {
   const cwd = process.cwd()
   const rootPackageJsonPath = path.join(cwd, 'package.json')
   const packageJson = require(rootPackageJsonPath)
@@ -32,5 +32,3 @@ async function getWorkspaces () {
     })
   return workspaces
 }
-
-module.exports.getWorkspaces = getWorkspaces

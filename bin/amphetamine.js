@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 
 const yargs = require('yargs')
-const { getWorkspaces, spawn } = require('../src')
+const getWorkspaces = require('../src/getWorkspaces')
+const spawn = require('../src/spawn')
 
 const cwd = process.cwd()
 
