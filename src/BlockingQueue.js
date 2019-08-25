@@ -5,49 +5,17 @@ module.exports = class BlockingQueue {
     this.concurrencyQueue = []
     this.maxConcurrency = maxConcurrency
     this.runningCount = 0
-    this.warnedStuck = false
     this.alias = alias
-    this.first = true
 
     this.running = []
     this.queue = []
-
-    this.stuckTick = this.stuckTick.bind(this)
-  }
-
-  stillActive () {
-    if (this.stuckTimer) {
-      clearTimeout(this.stuckTimer)
-    }
-
-    this.stuckTimer = setTimeout(this.stuckTick, 5000)
-
-    // We need to check the existence of unref because of https://github.com/facebook/jest/issues/4559
-    // $FlowFixMe: Node's setInterval returns a Timeout, not a Number
-    this.stuckTimer.unref && this.stuckTimer.unref()
-  }
-
-  stuckTick () {
-    if (this.runningCount === 1) {
-      this.warnedStuck = true
-      console.warn(
-        `The ${JSON.stringify(this.alias)} blocking queue may be stuck. 5 seconds ` +
-          `without any activity with 1 worker: ${Object.keys(this.running)[0]}`,
-      )
-    }
   }
 
   push (key, factory) {
-    if (this.first) {
-      this.first = false
-    } else {
-      this.stillActive()
-    }
-
     return new Promise((resolve, reject) => {
       // we're already running so push ourselves to the queue
       const queue = (this.queue[key] = this.queue[key] || [])
-      queue.push({factory, resolve, reject})
+      queue.push({ factory, resolve, reject })
 
       if (!this.running[key]) {
         this.shift(key)
@@ -59,16 +27,6 @@ module.exports = class BlockingQueue {
     if (this.running[key]) {
       delete this.running[key]
       this.runningCount--
-
-      if (this.stuckTimer) {
-        clearTimeout(this.stuckTimer)
-        this.stuckTimer = null
-      }
-
-      if (this.warnedStuck) {
-        this.warnedStuck = false
-        debug(`${JSON.stringify(this.alias)} blocking queue finally resolved. Nothing to worry about.`)
-      }
     }
 
     const queue = this.queue[key]

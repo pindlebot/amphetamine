@@ -3,10 +3,14 @@
 const yargs = require('yargs')
 const getWorkspaces = require('../src/getWorkspaces')
 const spawn = require('../src/spawn')
-
+const chalk = require('chalk')
 const cwd = process.cwd()
 
-const YARN_BIN_PATH = '/usr/local/bin/yarn'
+try {
+  require('v8-compile-cache')
+} catch (err) {
+
+}
 
 const _ = yargs
   .command(
@@ -25,28 +29,22 @@ const _ = yargs
         })
         .demandOption('command', 'Please provide the command to run in each workspace')
     }, async (argv) => {
+      const start = process.hrtime()
       const workspaces = await getWorkspaces()
-      console.time('amphetamine')
-      while (workspaces.length) {
-        const [name, workspace] = workspaces.shift()
-        const { location, pkg } = workspace
-        if (
-          !(pkg.scripts && pkg.scripts[argv.command])
-        ) {
-          continue
-        }
+      await Promise.all(
+        workspaces
+          .filter(([name, workspace]) => workspace.pkg.scripts && workspace.pkg.scripts[argv.command])
+          .map(([name, workspace]) => spawn('yarn', [argv.command, ...argv._], {
+            // stdio: 'inherit',
+            cwd: workspace.location
+          }, (buffer) => {
+            console.log(
+              chalk.rgb(96, 97, 190)(`[${name}]: `) + chalk.white(buffer.toString().trim())
+            )
+          }))
+      )
 
-        const args = [argv.command, ...argv._]
-
-        try {
-          await spawn(YARN_BIN_PATH, args, {
-            stdio: 'inherit',
-            cwd: location
-          })
-        } catch (err) {
-          console.error(err)
-        }
-      }
-      console.timeEnd('amphetamine')
+      const end = process.hrtime(start)
+      console.log(`Took ${end[0]} seconds`)
     })
   .argv

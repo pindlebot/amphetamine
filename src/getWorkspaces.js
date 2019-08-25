@@ -9,12 +9,11 @@ module.exports = async function getWorkspaces () {
   const packageJson = require(rootPackageJsonPath)
   const files = await Promise.all(
     packageJson.workspaces.map(
-      pattern => glob(pattern, { cwd, ignore: ['!**/node_modules/**'] })
+      pattern => glob(pattern.replace(/\/?$/, '/+(package.json)'), { cwd, ignore: ['!**/node_modules/**'] })
     )
   )
-
   const flatFiles = files.reduce((a, p) => {
-    a = a.concat(p.filter(q => q.endsWith('package.json')))
+    a = a.concat(p)
     return a
   }, [])
 

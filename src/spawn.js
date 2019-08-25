@@ -6,18 +6,18 @@ const queue = new BlockingQueue('child')
 module.exports = function spawn (
   program,
   args,
-  opts
+  opts,
+  cb
 ) {
   return queue.push(
     opts.cwd,
     () => new Promise((resolve, reject) => {
-      let stdout = ''
       const proc = child.spawn(program, args, opts)
       proc.on('error', (err) => {
         reject(err)
       })
-      proc.on('data', (chunk) => {
-        stdout += chunk
+      proc.stdout.on('data', (chunk) => {
+        cb(chunk)
       })
       proc.on('close', (code, signal) => {
         if (signal || code >= 1) {
@@ -26,7 +26,6 @@ module.exports = function spawn (
             signal ? `Exit signal: ${signal}` : `Exit code: ${code}`
           ].join('\n'))
         } else {
-          console.log(stdout.toString())
           resolve()
         }
       })
